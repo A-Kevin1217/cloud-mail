@@ -425,17 +425,10 @@ const emailService = {
 			body: params.html || params.text,
 			cc: [],
 			bcc: [],
-			replyTo: []
+			replyTo: params.sendType === 'reply' ? [params.messageId] : []
 		};
 
-		if (params.sendType === 'reply') {
-			sendForm.headers = {
-				'in-reply-to': params.messageId,
-				'references': params.messageId
-			};
-		}
-
-		return await client.sendEmail(sendForm);
+		return await client.batchSendEmail(sendForm);
 	},
 
 	async toCloudflareAttachments(attachments) {
