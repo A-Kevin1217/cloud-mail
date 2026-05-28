@@ -25,7 +25,7 @@ export const setting = sqliteTable('setting', {
 	ruleType: integer('rule_type').default(0).notNull(),
 	loginOpacity: integer('login_opacity').default(0.88),
 	loginDarkenFactor: integer('login_darken_factor').default(0),
-	resendTokens: text('resend_tokens').default("{}").notNull(),
+	sendflareTokens: text('sendflare_tokens').default("{}").notNull(),
 	noticeTitle: text('notice_title').default('').notNull(),
 	noticeContent: text('notice_content').default('').notNull(),
 	noticeType: text('notice_type').default('').notNull(),

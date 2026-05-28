@@ -2,12 +2,12 @@ import emailService from './email-service';
 import { emailConst } from '../const/entity-const';
 import BizError from '../error/biz-error';
 
-const resendService = {
+const sendflareService = {
 
 	async webhooks(c, body) {
 
 		const params = {
-			resendEmailId: body.data.email_id,
+			sendflareEmailId: body.data.email_id,
 			status: emailConst.status.SENT
 		}
 
@@ -47,4 +47,4 @@ const resendService = {
 	}
 }
 
-export default resendService
+export default sendflareService

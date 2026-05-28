@@ -14,7 +14,7 @@ const settingService = {
 
 	async refresh(c) {
 		const settingRow = await orm(c).select().from(setting).get();
-		settingRow.resendTokens = JSON.parse(settingRow.resendTokens);
+		settingRow.sendflareTokens = JSON.parse(settingRow.sendflareTokens);
 		c.set('setting', settingRow);
 		await c.env.kv.put(KvConst.SETTING, JSON.stringify(settingRow));
 	},
@@ -94,8 +94,8 @@ const settingService = {
 
 		settingRow.secretKey = settingRow.secretKey ? `${settingRow.secretKey.slice(0, 6)}******` : null;
 
-		Object.keys(settingRow.resendTokens).forEach(key => {
-			settingRow.resendTokens[key] = `${settingRow.resendTokens[key].slice(0, 12)}******`;
+		Object.keys(settingRow.sendflareTokens).forEach(key => {
+			settingRow.sendflareTokens[key] = `${settingRow.sendflareTokens[key].slice(0, 12)}******`;
 		});
 
 		settingRow.s3AccessKey = settingRow.s3AccessKey ? `${settingRow.s3AccessKey.slice(0, 12)}******` : null;
@@ -126,9 +126,9 @@ const settingService = {
 
 	async set(c, params) {
 		const settingData = await this.query(c);
-		let resendTokens = { ...settingData.resendTokens, ...params.resendTokens };
-		Object.keys(resendTokens).forEach(domain => {
-			if (!resendTokens[domain]) delete resendTokens[domain];
+		let sendflareTokens = { ...settingData.sendflareTokens, ...params.sendflareTokens };
+		Object.keys(sendflareTokens).forEach(domain => {
+			if (!sendflareTokens[domain]) delete sendflareTokens[domain];
 		});
 
 		if (Array.isArray(params.emailPrefixFilter)) {
@@ -144,7 +144,7 @@ const settingService = {
 			params.loginDarkenFactor = Number.isNaN(factor) ? 0 : Math.min(1, Math.max(0, factor));
 		}
 
-		params.resendTokens = JSON.stringify(resendTokens);
+		params.sendflareTokens = JSON.stringify(sendflareTokens);
 		await orm(c).update(setting).set({ ...params }).returning().get();
 		await this.refresh(c);
 	},

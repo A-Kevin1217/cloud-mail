@@ -184,16 +184,16 @@
                 </div>
               </div>
               <div class="setting-item">
-                <div><span>{{ setting.hasCfEmail ? $t('cloudflareEmailSending') : $t('resendToken') }}</span></div>
+                <div><span>{{ setting.hasCfEmail ? $t('cloudflareEmailSending') : $t('sendflareToken') }}</span></div>
                 <div v-if="setting.hasCfEmail">
                   <span>{{ $t('enabled') }}</span>
                 </div>
                 <div v-else>
-                  <el-button class="opt-button" style="margin-top: 0" @click="openResendList" size="small"
+                  <el-button class="opt-button" style="margin-top: 0" @click="openSendflareList" size="small"
                              type="primary">
                     <Icon icon="ic:round-list" width="18" height="18"/>
                   </el-button>
-                  <el-button class="opt-button" style="margin-top: 0" @click="openResendForm" size="small"
+                  <el-button class="opt-button" style="margin-top: 0" @click="openSendflareForm" size="small"
                              type="primary">
                     <Icon icon="material-symbols:add-rounded" width="16" height="16"/>
                   </el-button>
@@ -453,9 +453,9 @@
           <el-button type="primary" :loading="settingLoading" @click="saveTitle">{{ $t('save') }}</el-button>
         </form>
       </el-dialog>
-      <el-dialog v-model="resendTokenFormShow" :title="$t('resendToken')" width="340" @closed="cleanResendTokenForm">
+      <el-dialog v-model="sendflareTokenFormShow" :title="$t('sendflareToken')" width="340" @closed="cleanSendflareTokenForm">
         <form>
-          <el-select style="margin-bottom: 15px" v-model="resendTokenForm.domain" placeholder="Select">
+          <el-select style="margin-bottom: 15px" v-model="sendflareTokenForm.domain" placeholder="Select">
             <el-option
                 v-for="item in settingStore.domainList"
                 :key="item"
@@ -463,8 +463,8 @@
                 :value="item"
             />
           </el-select>
-          <el-input type="text" :placeholder="$t('addResendTokenDesc')" v-model="resendTokenForm.token"/>
-          <el-button type="primary" :loading="settingLoading" @click="saveResendToken">{{ $t('save') }}</el-button>
+          <el-input type="text" :placeholder="$t('addSendflareTokenDesc')" v-model="sendflareTokenForm.token"/>
+          <el-button type="primary" :loading="settingLoading" @click="saveSendflareToken">{{ $t('save') }}</el-button>
         </form>
       </el-dialog>
       <el-dialog v-model="r2DomainShow" :title="$t('addOsDomain')" width="340"
@@ -633,8 +633,8 @@
           </div>
         </template>
       </el-dialog>
-      <el-dialog class="resend-table" v-model="showResendList" :title="$t('resendTokenList')">
-        <el-table :data="resendList">
+      <el-dialog class="sendflare-table" v-model="showSendflareList" :title="$t('sendflareTokenList')">
+        <el-table :data="sendflareList">
           <el-table-column :min-width="emailColumnWidth" property="key" :label="$t('domain')"
                            :show-overflow-tooltip="true"/>
           <el-table-column :width="tokenColumnWidth" property="value" label="Token" fixed="right"
@@ -843,7 +843,7 @@ const localUpShow = ref(false)
 const accountStore = useAccountStore();
 const userStore = useUserStore();
 const editTitleShow = ref(false)
-const resendTokenFormShow = ref(false)
+const sendflareTokenFormShow = ref(false)
 const blackFormShow = ref(false)
 const aiCodeFilterShow = ref(false)
 const r2DomainShow = ref(false)
@@ -853,7 +853,7 @@ const noticePopupShow = ref(false)
 const thirdEmailShow = ref(false)
 const forwardRulesShow = ref(false)
 const emailPrefixShow = ref(false)
-const showResendList = ref(false)
+const showSendflareList = ref(false)
 const settingStore = useSettingStore();
 const uiStore = useUiStore();
 const {settings: setting} = storeToRefs(settingStore);
@@ -874,7 +874,7 @@ let backup = '{}'
 const addS3Show = ref(false)
 const addVerifyCountShow = ref(false)
 const regVerifyCountShow = ref(false)
-const resendTokenForm = reactive({
+const sendflareTokenForm = reactive({
   domain: '',
   token: '',
 })
@@ -952,7 +952,7 @@ function getSettings() {
   settingQuery().then(settingData => {
     setting.value = settingData
     settingStore.domainList = settingData.domainList;
-    resendTokenForm.domain = setting.value.domainList[0]
+    sendflareTokenForm.domain = setting.value.domainList[0]
     loginOpacity.value = setting.value.loginOpacity
     loginDarkenFactor.value = normalizeFactor(setting.value.loginDarkenFactor)
     minEmailPrefix.value = setting.value.minEmailPrefix
@@ -997,12 +997,12 @@ function resetAddS3Form() {
   s3.forcePathStyle = setting.value.forcePathStyle
 }
 
-const resendList = computed(() => {
+const sendflareList = computed(() => {
 
-  let list = Object.keys(setting.value.resendTokens).map(key => {
+  let list = Object.keys(setting.value.sendflareTokens).map(key => {
     return {
       key: key,
-      value: setting.value.resendTokens[key]
+      value: setting.value.sendflareTokens[key]
     };
   })
 
@@ -1081,8 +1081,8 @@ function openNoticePopupSetting() {
   noticePopupShow.value = true
 }
 
-function openResendList() {
-  showResendList.value = true
+function openSendflareList() {
+  showSendflareList.value = true
 }
 
 function resetNoticeForm() {
@@ -1422,8 +1422,8 @@ function saveR2domain() {
   editSetting(settingForm)
 }
 
-function openResendForm() {
-  resendTokenFormShow.value = true
+function openSendflareForm() {
+  sendflareTokenFormShow.value = true
 }
 
 function openBlackListForm() {
@@ -1434,25 +1434,25 @@ function openAiCodeFilter() {
   aiCodeFilterShow.value = true
 }
 
-function saveResendToken() {
+function saveSendflareToken() {
   const settingForm = {
-    resendTokens: {}
+    sendflareTokens: {}
   }
-  const domain = resendTokenForm.domain.slice(1)
-  settingForm.resendTokens[domain] = resendTokenForm.token
+  const domain = sendflareTokenForm.domain.slice(1)
+  settingForm.sendflareTokens[domain] = sendflareTokenForm.token
   editSetting(settingForm)
 }
 
 function backupSetting() {
   const settingForm = {...setting.value}
-  delete settingForm.resendTokens
+  delete settingForm.sendflareTokens
   delete settingForm.siteKey
   delete settingForm.secretKey
   backup = JSON.stringify(setting.value)
 }
 
-function cleanResendTokenForm() {
-  resendTokenForm.token = ''
+function cleanSendflareTokenForm() {
+  sendflareTokenForm.token = ''
 }
 
 function beforeChange() {
@@ -1469,7 +1469,7 @@ function change(e) {
   delete settingForm.s3AccessKey
   delete settingForm.s3SecretKey
   delete settingForm.tgBotToken
-  delete settingForm.resendTokens
+  delete settingForm.sendflareTokens
   editSetting(settingForm, false)
 }
 
@@ -1509,7 +1509,7 @@ function editSetting(settingForm, refreshStatus = true) {
     }
     editTitleShow.value = false
     r2DomainShow.value = false
-    resendTokenFormShow.value = false
+    sendflareTokenFormShow.value = false
     turnstileShow.value = false
     tgSettingShow.value = false
     thirdEmailShow.value = false
@@ -1737,7 +1737,7 @@ function editSetting(settingForm, refreshStatus = true) {
   }
 }
 
-:deep(.resend-table.el-dialog) {
+:deep(.sendflare-table.el-dialog) {
   min-height: 300px;
   width: 500px !important;
   @media (max-width: 540px) {
@@ -1757,7 +1757,7 @@ function editSetting(settingForm, refreshStatus = true) {
   }
 }
 
-:deep(.resend-table .el-dialog__header) {
+:deep(.sendflare-table .el-dialog__header) {
   padding-bottom: 5px;
 }
 

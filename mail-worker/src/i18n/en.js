@@ -20,7 +20,7 @@ const en = {
 	daySendLack: 'Not enough remaining sends today',
 	totalSendLack: 'Not enough total remaining sends',
 	senderAccountNotExist: 'Sender email does not exist',
-	noResendToken: 'Resend API token not configured',
+	noSendflareToken: 'Sendflare API token not configured',
 	noSendProvider: 'Email sending service is not configured',
 	sendEmailNotCurUser: 'Sender email does not belong to current user',
 	notExistEmailReply: 'Mail does not exist and cannot be replied to',

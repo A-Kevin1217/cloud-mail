@@ -30,6 +30,7 @@ const dbInit = {
 		await this.v2_9DB(c);
 		await this.v3_0DB(c);
 		await this.v3_1DB(c);
+		await this.v3_2DB(c);
 		await settingService.refresh(c);
 		return c.text('success');
 	},
@@ -37,6 +38,19 @@ const dbInit = {
 	async v3_1DB(c) {
 		try {
 			await c.env.db.prepare(`ALTER TABLE setting ADD COLUMN login_darken_factor INTEGER NOT NULL DEFAULT 0;`).run();
+		} catch (e) {
+			console.warn(`跳过字段：${e.message}`);
+		}
+	},
+
+	async v3_2DB(c) {
+		try {
+			await c.env.db.prepare(`ALTER TABLE email RENAME COLUMN resend_email_id TO sendflare_email_id;`).run();
+		} catch (e) {
+			console.warn(`跳过字段：${e.message}`);
+		}
+		try {
+			await c.env.db.prepare(`ALTER TABLE setting RENAME COLUMN resend_tokens TO sendflare_tokens;`).run();
 		} catch (e) {
 			console.warn(`跳过字段：${e.message}`);
 		}

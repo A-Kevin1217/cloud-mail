@@ -8,7 +8,7 @@ import accountService from './account-service';
 import BizError from '../error/biz-error';
 import emailUtils from '../utils/email-utils';
 import fileUtils from '../utils/file-utils';
-import { Resend } from 'resend';
+import { Sendflare } from 'sendflare-sdk-ts';
 import attService from './att-service';
 import { parseHTML } from 'linkedom';
 import userService from './user-service';
@@ -164,7 +164,7 @@ const emailService = {
 			attachments = [] //附件
 		} = params;
 
-		const { resendTokens, r2Domain, send, domainList } = await settingService.query(c);
+		const { sendflareTokens, r2Domain, send, domainList } = await settingService.query(c);
 
 		let { imageDataList, html } = await attService.toImageUrlHtml(c, content);
 
@@ -230,11 +230,11 @@ const emailService = {
 		}
 
 		const domain = emailUtils.getDomain(accountRow.email);
-		const resendToken = resendTokens[domain];
+		const sendflareToken = sendflareTokens[domain];
 		const useCloudflareEmail = !!c.env.email;
 
 		//如果接收方存在站外邮箱，又没有发信服务
-		if (!useCloudflareEmail && !resendToken && !allInternal) {
+		if (!useCloudflareEmail && !sendflareToken && !allInternal) {
 			throw new BizError(t('noSendProvider'));
 		}
 
@@ -260,7 +260,7 @@ const emailService = {
 
 		let sendResult = {};
 
-		//存在站外邮箱时，如果配置了 Cloudflare Email Service 就优先使用，否则使用 Resend
+		//存在站外邮箱时，如果配置了 Cloudflare Email Service 就优先使用，否则使用 Sendflare
 		if (!allInternal) {
 
 			if (useCloudflareEmail) {
@@ -276,7 +276,7 @@ const emailService = {
 					messageId: emailRow.messageId
 				});
 			} else {
-				sendResult = await this.sendByResend(resendToken, {
+				sendResult = await this.sendBySendflare(sendflareToken, {
 					name,
 					accountEmail: accountRow.email,
 					receiveEmail,
@@ -314,7 +314,7 @@ const emailService = {
 		emailData.status = useCloudflareEmail ? emailConst.status.DELIVERED : emailConst.status.SENT;
 		emailData.type = emailConst.type.SEND;
 		emailData.userId = userId;
-		emailData.resendEmailId = data?.id;
+		emailData.sendflareEmailId = data?.requestId || data?.id;
 
 		const recipient = [];
 
@@ -411,16 +411,17 @@ const emailService = {
 		};
 	},
 
-	async sendByResend(resendToken, params) {
-		const resend = new Resend(resendToken);
+	async sendBySendflare(sendflareToken, params) {
+		const client = new Sendflare(sendflareToken);
 
 		const sendForm = {
 			from: `${params.name} <${params.accountEmail}>`,
 			to: [...params.receiveEmail],
 			subject: params.subject,
-			text: params.text,
-			html: params.html,
-			attachments: await this.toResendAttachments(params.attachments)
+			body: params.html || params.text,
+			cc: [],
+			bcc: [],
+			replyTo: []
 		};
 
 		if (params.sendType === 'reply') {
@@ -430,7 +431,7 @@ const emailService = {
 			};
 		}
 
-		return await resend.emails.send(sendForm);
+		return await client.sendEmail(sendForm);
 	},
 
 	async toCloudflareAttachments(attachments) {
@@ -452,7 +453,7 @@ const emailService = {
 		});
 	},
 
-	async toResendAttachments(attachments = []) {
+	async toSendflareAttachments(attachments = []) {
 		const result = [];
 
 		for (const attachment of attachments) {
@@ -745,11 +746,11 @@ const emailService = {
 	},
 
 	updateEmailStatus(c, params) {
-		const { status, resendEmailId, message } = params;
+		const { status, sendflareEmailId, message } = params;
 		return orm(c).update(email).set({
 			status: status,
 			message: message
-		}).where(eq(email.resendEmailId, resendEmailId)).returning().get();
+		}).where(eq(email.sendflareEmailId, sendflareEmailId)).returning().get();
 	},
 
 	async selectUserEmailCountList(c, userIds, type, del = isDel.NORMAL) {
