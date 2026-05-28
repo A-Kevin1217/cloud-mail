@@ -291,11 +291,15 @@ const emailService = {
 
 		}
 
+		//兼容 Cloudflare Email 的 { data, error } 格式和 Sendflare 的 { requestId, success, message } 格式
 		const { data, error } = sendResult;
-
 
 		if (error) {
 			throw new BizError(error.message);
+		}
+
+		if (sendResult.success === false) {
+			throw new BizError(sendResult.message || 'Sendflare send failed');
 		}
 
 		imageDataList = imageDataList.map(item => ({...item, contentId: `<${item.contentId}>`}))
@@ -314,7 +318,7 @@ const emailService = {
 		emailData.status = useCloudflareEmail ? emailConst.status.DELIVERED : emailConst.status.SENT;
 		emailData.type = emailConst.type.SEND;
 		emailData.userId = userId;
-		emailData.sendflareEmailId = data?.requestId || data?.id;
+		emailData.sendflareEmailId = sendResult.requestId || data?.id;
 
 		const recipient = [];
 
