@@ -7,3 +7,7 @@ export function oauthLinuxDoLogin(code) {
 export function oauthBindUser(form) {
     return http.put('/oauth/bindUser', form)
 }
+
+export function oauthBindExisting(form) {
+    return http.put('/oauth/bindExisting', form)
+}

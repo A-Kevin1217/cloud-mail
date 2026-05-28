@@ -5,6 +5,7 @@ import { eq, inArray } from 'drizzle-orm';
 import userService from "./user-service";
 import loginService from "./login-service";
 import cryptoUtils from "../utils/crypto-utils";
+import {t} from "../i18n/i18n";
 
 const oauthService = {
 
@@ -25,6 +26,42 @@ const oauthService = {
 		userRow = await userService.selectByEmail(c, email);
 
 		orm(c).update(oauth).set({ userId: userRow.userId }).where(eq(oauth.oauthUserId, oauthUserId)).run();
+		const jwtToken = await loginService.login(c, { email, password: null }, true);
+
+		return { userInfo: oauthRow, token: jwtToken}
+	},
+
+	async bindExistingUser(c, params) {
+
+		const { email, password, oauthUserId } = params;
+
+		const oauthRow = await this.getById(c, oauthUserId);
+
+		if (!oauthRow) {
+			throw new BizError(t('notExistUser'));
+		}
+
+		let userRow = await userService.selectByIdIncludeDel(c, oauthRow.userId);
+
+		if (userRow) {
+			throw new BizError('用户已绑定有邮箱')
+		}
+
+		const existUser = await userService.selectByEmail(c, email);
+
+		if (!existUser) {
+			throw new BizError(t('notExistUser'));
+		}
+
+		const oauthBound = await orm(c).select().from(oauth).where(eq(oauth.userId, existUser.userId)).get();
+
+		if (oauthBound) {
+			throw new BizError('该邮箱已绑定其他账号');
+		}
+
+		await loginService.login(c, { email, password });
+
+		orm(c).update(oauth).set({ userId: existUser.userId }).where(eq(oauth.oauthUserId, oauthUserId)).run();
 		const jwtToken = await loginService.login(c, { email, password: null }, true);
 
 		return { userInfo: oauthRow, token: jwtToken}

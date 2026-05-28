@@ -106,8 +106,12 @@
         </template>
       </div>
     </div>
-    <el-dialog class="bind-dialog" v-model="showBindForm"  title="注册邮箱" >
+    <el-dialog class="bind-dialog" v-model="showBindForm"  title="绑定邮箱" @closed="bindMode = 'register'">
       <div class="bind-container">
+        <el-radio-group v-model="bindMode" style="margin-bottom: 15px">
+          <el-radio value="register">注册新邮箱</el-radio>
+          <el-radio value="existing">绑定已有邮箱</el-radio>
+        </el-radio-group>
         <el-input :class="!hideLoginDomain ? 'email-input' : ''" v-model="bindForm.email" type="text" :placeholder="$t('emailAccount')" autocomplete="off">
           <template #append v-if="!hideLoginDomain">
             <div @click.stop="openSelect">
@@ -131,9 +135,10 @@
             </div>
           </template>
         </el-input>
-        <el-input v-if="settingStore.settings.regKey === 0" v-model="bindForm.code" :placeholder="$t('regKey')"
+        <el-input v-if="bindMode === 'existing'" v-model="bindForm.password" :placeholder="$t('password')" type="password" autocomplete="off" show-password/>
+        <el-input v-if="bindMode === 'register' && settingStore.settings.regKey === 0" v-model="bindForm.code" :placeholder="$t('regKey')"
                   type="text" autocomplete="off"/>
-        <el-input v-if="settingStore.settings.regKey === 2" v-model="bindForm.code"
+        <el-input v-if="bindMode === 'register' && settingStore.settings.regKey === 2" v-model="bindForm.code"
                   :placeholder="$t('regKeyOptional')" type="text" autocomplete="off"/>
         <el-button class="btn" type="primary" @click="bind" :loading="bindLoading"
         >绑定
@@ -162,7 +167,7 @@ import {cvtR2Url} from "@/utils/convert.js";
 import {loginUserInfo} from "@/request/my.js";
 import {permsToRouter} from "@/perm/perm.js";
 import {useI18n} from "vue-i18n";
-import {oauthBindUser, oauthLinuxDoLogin} from "@/request/ouath.js";
+import {oauthBindUser, oauthBindExisting, oauthLinuxDoLogin} from "@/request/ouath.js";
 
 const {t} = useI18n();
 const accountStore = useAccountStore();
@@ -175,10 +180,12 @@ const oauthLoading = ref(false);
 const showBindForm = ref(false);
 const show = ref('login')
 
+const bindMode = ref('register')
 const bindForm = reactive({
   email: '',
   oauthUserId: '',
-  code: ''
+  code: '',
+  password: ''
 })
 
 const form = reactive({
@@ -344,6 +351,25 @@ function bind() {
       message: t('notEmailMsg'),
       type: 'error',
       plain: true,
+    })
+    return
+  }
+
+  if (bindMode.value === 'existing') {
+    if (!bindForm.password) {
+      ElMessage({
+        message: t('emptyPwdMsg'),
+        type: 'error',
+        plain: true,
+      })
+      return
+    }
+
+    bindLoading.value = true
+    oauthBindExisting({email, password: bindForm.password, oauthUserId: bindForm.oauthUserId}).then(data => {
+      saveToken(data.token)
+    }).catch(() => {
+      bindLoading.value = false
     })
     return
   }
